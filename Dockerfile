@@ -1,9 +1,10 @@
-FROM php:8.2-apache-bookworm
+FROM php:8.0-apache-bullseye
 ENV COMPOSER_ALLOW_SUPERUSER=1
-# Laravel 8.42 uses legacy interfaces that trigger PHP 8.2 deprecation notices.
-# Suppress deprecations for this isolated synthetic-data demo only.
-RUN printf '%s\n' 'error_reporting = E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED' > /usr/local/etc/php/conf.d/legacy-demo.ini
-RUN apt-get update && apt-get install -y --no-install-recommends git unzip curl libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev libicu-dev libpq-dev \
+# PHP 8.0 is an EOL compatibility runtime for isolated demo use only.
+# Upgrade Laravel and PHP before any production rollout.
+RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g; s|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list \
+    && printf 'Acquire::Check-Valid-Until "false";\n' > /etc/apt/apt.conf.d/99archive
+RUN apt-get update -o Acquire::Check-Valid-Until=false && apt-get install -y --no-install-recommends git unzip curl libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev libicu-dev libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j2 pdo_mysql mysqli pdo_pgsql pgsql gd zip intl bcmath \
     && a2enmod rewrite headers \
