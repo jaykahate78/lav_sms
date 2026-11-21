@@ -133,11 +133,14 @@ class PaymentController extends Controller
     public function pay_now(Request $req, $pr_id)
     {
         $this->validate($req, [
-            'amt_paid' => 'required|numeric'
+            'amt_paid' => 'required|numeric|gt:0'
         ], [], ['amt_paid' => 'Amount Paid']);
 
         $pr = $this->pay->findRecord($pr_id);
         $payment = $this->pay->find($pr->payment_id);
+        if ($req->amt_paid > ($payment->amount - $pr->amt_paid)) {
+            return response()->json(['ok' => false, 'msg' => 'Payment exceeds outstanding balance'], 422);
+        }
         $d['amt_paid'] = $amt_p = $pr->amt_paid + $req->amt_paid;
         $d['balance'] = $bal = $payment->amount - $amt_p;
         $d['paid'] = $bal < 1 ? 1 : 0;
