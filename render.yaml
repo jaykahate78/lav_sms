@@ -1,24 +1,6 @@
+# Example Blueprint for a new web service. Existing Render 'lav_sms' is configured directly.
+# Neon database project: lavsms-school-demo (not managed by Render).
 services:
-  - type: pserv
-    name: lavsms-mysql-demo
-    runtime: docker
-    plan: starter
-    region: singapore
-    branch: deploy/render-school-demo
-    dockerfilePath: ./docker/mysql/Dockerfile
-    disk:
-      name: lavsms-mysql-data
-      mountPath: /var/lib/mysql
-      sizeGB: 1
-    envVars:
-      - key: MYSQL_DATABASE
-        value: lavsms_demo
-      - key: MYSQL_USER
-        value: lavsms_demo
-      - key: MYSQL_PASSWORD
-        generateValue: true
-      - key: MYSQL_ROOT_PASSWORD
-        generateValue: true
   - type: web
     name: lavsms-school-demo
     runtime: docker
@@ -39,20 +21,19 @@ services:
       - key: APP_KEY
         sync: false
       - key: DB_CONNECTION
-        value: mysql
+        value: pgsql
+      - key: DB_SSLMODE
+        value: require
       - key: DB_HOST
-        value: lavsms-mysql-demo
+        sync: false
       - key: DB_PORT
-        value: "3306"
+        value: "5432"
       - key: DB_DATABASE
-        value: lavsms_demo
+        sync: false
       - key: DB_USERNAME
-        value: lavsms_demo
+        sync: false
       - key: DB_PASSWORD
-        fromService:
-          type: pserv
-          name: lavsms-mysql-demo
-          envVarKey: MYSQL_PASSWORD
+        sync: false
       - key: CACHE_DRIVER
         value: file
       - key: SESSION_DRIVER

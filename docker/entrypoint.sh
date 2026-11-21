@@ -6,6 +6,10 @@ set -Eeuo pipefail
 : "${DB_DATABASE:?Set DB_DATABASE}"
 : "${DB_USERNAME:?Set DB_USERNAME}"
 : "${DB_PASSWORD:?Set DB_PASSWORD}"
+if [[ "${DB_CONNECTION:-}" != pgsql ]]; then
+  echo "DB_CONNECTION must be pgsql for Neon" >&2
+  exit 1
+fi
 if [[ "$APP_KEY" != base64:* ]]; then
   echo "APP_KEY must use Laravel base64: format" >&2
   exit 1
@@ -16,17 +20,17 @@ if [[ "$APP_URL" == https://* ]]; then
   export SESSION_SECURE_COOKIE=true
 fi
 
-echo "Waiting for MySQL..."
+echo "Waiting for Neon PostgreSQL..."
 connected=0
 for i in $(seq 1 60); do
-  if php -r 'try { new PDO("mysql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: "3306").";dbname=".getenv("DB_DATABASE"), getenv("DB_USERNAME"), getenv("DB_PASSWORD"), [PDO::ATTR_TIMEOUT => 3]); } catch (Throwable $e) { exit(1); }'; then
+  if php -r 'try { new PDO("pgsql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: "5432").";dbname=".getenv("DB_DATABASE").";sslmode=require;connect_timeout=4", getenv("DB_USERNAME"), getenv("DB_PASSWORD"), [PDO::ATTR_TIMEOUT => 3]); } catch (Throwable $e) { exit(1); }'; then
     connected=1
     break
   fi
   sleep 2
 done
 if [[ "$connected" != 1 ]]; then
-  echo "MySQL connection unavailable. Refusing to serve broken application." >&2
+  echo "Neon PostgreSQL connection unavailable. Refusing to serve broken application." >&2
   exit 1
 fi
 

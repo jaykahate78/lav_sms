@@ -1,8 +1,8 @@
 FROM php:8.2-apache-bookworm
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN apt-get update && apt-get install -y --no-install-recommends git unzip curl libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev libicu-dev \
+RUN apt-get update && apt-get install -y --no-install-recommends git unzip curl libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev libicu-dev libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j2 pdo_mysql mysqli gd zip intl bcmath \
+    && docker-php-ext-install -j2 pdo_mysql mysqli pdo_pgsql pgsql gd zip intl bcmath \
     && a2enmod rewrite headers \
     && sed -i 's/Listen 80/Listen 10000/' /etc/apache2/ports.conf \
     && rm -rf /var/lib/apt/lists/*
