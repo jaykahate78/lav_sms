@@ -6,6 +6,7 @@ set -Eeuo pipefail
 : "${DB_DATABASE:?Set DB_DATABASE}"
 : "${DB_USERNAME:?Set DB_USERNAME}"
 : "${DB_PASSWORD:?Set DB_PASSWORD}"
+: "${NEON_ENDPOINT_ID:?Set NEON_ENDPOINT_ID from Neon hostname}"
 if [[ "${DB_CONNECTION:-}" != pgsql ]]; then
   echo "DB_CONNECTION must be pgsql for Neon" >&2
   exit 1
@@ -23,7 +24,7 @@ fi
 echo "Waiting for Neon PostgreSQL..."
 connected=0
 for i in $(seq 1 12); do
-  if php -r 'try { new PDO("pgsql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: "5432").";dbname=".getenv("DB_DATABASE").";sslmode=require;connect_timeout=4", getenv("DB_USERNAME"), getenv("DB_PASSWORD")); } catch (Throwable $e) {  $msg = strtolower($e->getMessage()); $category = (strpos($msg, "could not translate") !== false || strpos($msg, "name or service not known") !== false) ? "dns" : ((strpos($msg, "password authentication failed") !== false || strpos($msg, "no pg_hba.conf entry") !== false) ? "auth" : ((strpos($msg, "timeout") !== false || strpos($msg, "timed out") !== false) ? "timeout" : ((strpos($msg, "refused") !== false || strpos($msg, "network is unreachable") !== false) ? "network" : "other")));  $detail = substr(str_replace([getenv("DB_PASSWORD"), getenv("APP_KEY"), getenv("DEMO_SEED_PASSWORD")], "[REDACTED]", $e->getMessage()), 0, 480); fwrite(STDERR, "Neon connectivity: category=" . $category . " code=" . $e->getCode() . " detail=" . $detail . "\\n"); exit(1); }'; then
+  if php -r 'try { new PDO("pgsql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: "5432").";dbname=".getenv("DB_DATABASE").";sslmode=require;connect_timeout=4;options=endpoint=".getenv("NEON_ENDPOINT_ID"), getenv("DB_USERNAME"), getenv("DB_PASSWORD")); } catch (Throwable $e) {  $msg = strtolower($e->getMessage()); $category = (strpos($msg, "could not translate") !== false || strpos($msg, "name or service not known") !== false) ? "dns" : ((strpos($msg, "password authentication failed") !== false || strpos($msg, "no pg_hba.conf entry") !== false) ? "auth" : ((strpos($msg, "timeout") !== false || strpos($msg, "timed out") !== false) ? "timeout" : ((strpos($msg, "refused") !== false || strpos($msg, "network is unreachable") !== false) ? "network" : "other")));  $detail = substr(str_replace([getenv("DB_PASSWORD"), getenv("APP_KEY"), getenv("DEMO_SEED_PASSWORD")], "[REDACTED]", $e->getMessage()), 0, 480); fwrite(STDERR, "Neon connectivity: category=" . $category . " code=" . $e->getCode() . " detail=" . $detail . "\\n"); exit(1); }'; then
     connected=1
     break
   fi
