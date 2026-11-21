@@ -25,7 +25,7 @@ class StudentRecordsTableSeeder extends Seeder
     {
         $password = env('DEMO_SEED_PASSWORD');
         if (!$password || strlen($password) < 16) {
-            throw new \\RuntimeException('DEMO_SEED_PASSWORD must be 16+ characters');
+            throw new \RuntimeException('DEMO_SEED_PASSWORD must be 16+ characters');
         }
         return $password;
     }
