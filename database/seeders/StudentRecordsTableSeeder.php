@@ -21,6 +21,15 @@ class StudentRecordsTableSeeder extends Seeder
         $this->createManyStudentRecords(3);
     }
 
+    protected function demoPassword()
+    {
+        $password = env('DEMO_SEED_PASSWORD');
+        if (!$password || strlen($password) < 16) {
+            throw new \\RuntimeException('DEMO_SEED_PASSWORD must be 16+ characters');
+        }
+        return $password;
+    }
+
     protected function createManyStudentRecords(int $count)
     {
         $sections = Section::all();
@@ -39,7 +48,7 @@ class StudentRecordsTableSeeder extends Seeder
                 ->count($count)
                 ->create([
                     'user_type' => 'student',
-                    'password' => Hash::make('student'),
+                    'password' => Hash::make($this->demoPassword()),
                 ]);
         }
 
@@ -53,7 +62,7 @@ class StudentRecordsTableSeeder extends Seeder
             'name' => 'Student CJ',
             'user_type' => 'student',
             'username' => 'student',
-            'password' => Hash::make('cj'),
+            'password' => Hash::make($this->demoPassword()),
             'email' => 'student@student.com',
 
         ]);
