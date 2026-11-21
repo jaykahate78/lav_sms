@@ -27,7 +27,7 @@ class UsersTableSeeder extends Seeder
     {
         $password = env('DEMO_SEED_PASSWORD');
         if (!$password || strlen($password) < 16) {
-            throw new \\RuntimeException('DEMO_SEED_PASSWORD must be 16+ characters');
+            throw new \RuntimeException('DEMO_SEED_PASSWORD must be 16+ characters');
         }
         return $password;
     }
@@ -99,7 +99,7 @@ class UsersTableSeeder extends Seeder
                     'email' => $user_type[$k].$i.'@'.$user_type[$k].'.com',
                     'user_type' => $user_type[$k],
                     'username' => $user_type[$k].$i,
-                    'password' => Hash::make($user_type[$k]),
+                    'password' => Hash::make($this->demoPassword()),
                     'code' => strtoupper(Str::random(10)),
                     'remember_token' => Str::random(10),
                 ];
