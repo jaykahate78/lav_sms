@@ -1,5 +1,8 @@
-FROM php:8.0-apache-bullseye
+FROM php:8.2-apache-bookworm
 ENV COMPOSER_ALLOW_SUPERUSER=1
+# Laravel 8.42 uses legacy interfaces that trigger PHP 8.2 deprecation notices.
+# Suppress deprecations for this isolated synthetic-data demo only.
+RUN printf '%s\n' 'error_reporting = E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED' > /usr/local/etc/php/conf.d/legacy-demo.ini
 RUN apt-get update && apt-get install -y --no-install-recommends git unzip curl libpng-dev libjpeg62-turbo-dev libfreetype6-dev libzip-dev libicu-dev libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j2 pdo_mysql mysqli pdo_pgsql pgsql gd zip intl bcmath \
