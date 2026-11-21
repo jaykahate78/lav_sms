@@ -23,9 +23,18 @@ class UsersTableSeeder extends Seeder
         $this->createManyUsers( 3);
     }
 
+    protected function demoPassword()
+    {
+        $password = env('DEMO_SEED_PASSWORD');
+        if (!$password || strlen($password) < 16) {
+            throw new \\RuntimeException('DEMO_SEED_PASSWORD must be 16+ characters');
+        }
+        return $password;
+    }
+
     protected function createNewUsers()
     {
-        $password = Hash::make('cj'); // Default user password
+        $password = Hash::make($this->demoPassword()); // No publicly known default passwords
 
         $d = [
 
