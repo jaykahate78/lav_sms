@@ -1,0 +1,67 @@
+services:
+  - type: pserv
+    name: lavsms-mysql-demo
+    runtime: docker
+    plan: starter
+    region: singapore
+    branch: deploy/render-school-demo
+    dockerfilePath: ./docker/mysql/Dockerfile
+    disk:
+      name: lavsms-mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 1
+    envVars:
+      - key: MYSQL_DATABASE
+        value: lavsms_demo
+      - key: MYSQL_USER
+        value: lavsms_demo
+      - key: MYSQL_PASSWORD
+        generateValue: true
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
+  - type: web
+    name: lavsms-school-demo
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: deploy/render-school-demo
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: APP_NAME
+        value: Village School Demo
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: APP_KEY
+        sync: false
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        value: lavsms-mysql-demo
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_DATABASE
+        value: lavsms_demo
+      - key: DB_USERNAME
+        value: lavsms_demo
+      - key: DB_PASSWORD
+        fromService:
+          type: pserv
+          name: lavsms-mysql-demo
+          envVarKey: MYSQL_PASSWORD
+      - key: CACHE_DRIVER
+        value: file
+      - key: SESSION_DRIVER
+        value: file
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: DEMO_SEED
+        value: "true"
+      - key: DEMO_SEED_PASSWORD
+        sync: false
