@@ -45,7 +45,7 @@
                                     </label>
                                 </div>
 
-                                <a href="{{ route('password.request') }}" class="ml-auto">Forgot password?</a>
+                                {{-- Public password reset is disabled for the restricted demo. --}}
                             </div>
 
                             <div class="form-group">
