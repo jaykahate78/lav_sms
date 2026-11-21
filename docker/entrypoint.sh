@@ -22,8 +22,8 @@ fi
 
 echo "Waiting for Neon PostgreSQL..."
 connected=0
-for i in $(seq 1 60); do
-  if php -r 'try { new PDO("pgsql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: "5432").";dbname=".getenv("DB_DATABASE").";sslmode=require;connect_timeout=4", getenv("DB_USERNAME"), getenv("DB_PASSWORD"), [PDO::ATTR_TIMEOUT => 3]); } catch (Throwable $e) { exit(1); }'; then
+for i in $(seq 1 12); do
+  if php -r 'try { new PDO("pgsql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: "5432").";dbname=".getenv("DB_DATABASE").";sslmode=require;connect_timeout=4", getenv("DB_USERNAME"), getenv("DB_PASSWORD"), [PDO::ATTR_TIMEOUT => 3]); } catch (Throwable $e) { fwrite(STDERR, "Neon connectivity check failed (" . get_class($e) . ", code " . $e->getCode() . ")\\n"); exit(1); }'; then
     connected=1
     break
   fi
