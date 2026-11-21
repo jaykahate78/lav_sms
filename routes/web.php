@@ -1,6 +1,6 @@
 <?php
 
-Auth::routes();
+Auth::routes(['register' => false, 'reset' => false, 'verify' => false]);
 
 //Route::get('/test', 'TestController@index')->name('test');
 Route::get('/privacy-policy', 'HomeController@privacy_policy')->name('privacy_policy');
@@ -23,7 +23,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::group(['namespace' => 'SupportTeam',], function(){
 
         /*************** Students *****************/
-        Route::group(['prefix' => 'students'], function(){
+        Route::group(['prefix' => 'students', 'middleware' => 'teamSAT'], function(){
             Route::get('reset_pass/{st_id}', 'StudentRecordController@reset_pass')->name('st.reset_pass');
             Route::get('graduated', 'StudentRecordController@graduated')->name('students.graduated');
             Route::put('not_graduated/{id}', 'StudentRecordController@not_graduated')->name('st.not_graduated');
@@ -82,7 +82,7 @@ Route::group(['middleware' => 'auth'], function () {
         });
 
         /*************** Payments *****************/
-        Route::group(['prefix' => 'payments'], function(){
+        Route::group(['prefix' => 'payments', 'middleware' => 'teamAccount'], function(){
 
             Route::get('manage/{class_id?}', 'PaymentController@manage')->name('payments.manage');
             Route::get('invoice/{id}/{year?}', 'PaymentController@invoice')->name('payments.invoice');
