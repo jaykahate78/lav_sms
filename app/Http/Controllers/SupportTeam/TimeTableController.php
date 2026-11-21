@@ -23,6 +23,7 @@ class TimeTableController extends Controller
         $this->my_class = $mc;
         $this->exam = $exam;
         $this->year = Qs::getCurrentSession();
+        $this->middleware('teamSA', ['only' => ['manage', 'store', 'update', 'delete', 'store_time_slot', 'use_time_slot', 'edit_time_slot', 'update_time_slot', 'delete_time_slot', 'edit_record', 'store_record', 'update_record', 'delete_record']]);
     }
 
     public function index()
