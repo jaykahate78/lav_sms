@@ -59,7 +59,7 @@ class UserController extends Controller
             return back()->with('flash_danger', __('msg.denied'));
         }
 
-        $data['password'] = Hash::make('user');
+        $data['password'] = Hash::make(Str::random(40));
         $this->user->update($id, $data);
         return back()->with('flash_success', __('msg.pu_reset'));
     }
@@ -80,7 +80,7 @@ class UserController extends Controller
         $staff_id = Qs::getAppCode().'/STAFF/'.date('Y/m', strtotime($req->emp_date)).'/'.mt_rand(1000, 9999);
         $data['username'] = $uname = ($user_is_teamSA) ? $req->username : $staff_id;
 
-        $pass = $req->password ?: $user_type;
+        $pass = $req->password ?: Str::random(40);
         $data['password'] = Hash::make($pass);
 
         if($req->hasFile('photo')) {
@@ -163,7 +163,7 @@ class UserController extends Controller
         $data['user'] = $this->user->find($user_id);
 
         /* Prevent Other Students from viewing Profile of others*/
-        if(Auth::user()->id != $user_id && !Qs::userIsTeamSAT() && !Qs::userIsMyChild(Auth::user()->id, $user_id)){
+        if(Auth::user()->id != $user_id && !Qs::userIsTeamSAT() && !Qs::userIsMyChild($user_id, Auth::user()->id)){
             return redirect(route('dashboard'))->with('pop_error', __('msg.denied'));
         }
 
