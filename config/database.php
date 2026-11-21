@@ -56,7 +56,8 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'host' => env('DB_HOST', '127.0.0.1'),
+            // Old libpq on the isolated demo runtime lacks SNI. Neon accepts an explicit endpoint option.
+            'host' => env('DB_HOST', '127.0.0.1').(env('NEON_ENDPOINT_ID') ? ';options=endpoint='.env('NEON_ENDPOINT_ID') : ''),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
