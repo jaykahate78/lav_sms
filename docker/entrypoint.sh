@@ -21,36 +21,45 @@ if [[ "$APP_URL" == https://* ]]; then
   export SESSION_SECURE_COOKIE=true
 fi
 
-echo "Waiting for Neon PostgreSQL..."
-connected=0
-for i in $(seq 1 12); do
-  if php -r 'try { new PDO("pgsql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: "5432").";dbname=".getenv("DB_DATABASE").";sslmode=require;connect_timeout=4;options=endpoint=".getenv("NEON_ENDPOINT_ID"), getenv("DB_USERNAME"), getenv("DB_PASSWORD")); } catch (Throwable $e) {  $msg = strtolower($e->getMessage()); $category = (strpos($msg, "could not translate") !== false || strpos($msg, "name or service not known") !== false) ? "dns" : ((strpos($msg, "password authentication failed") !== false || strpos($msg, "no pg_hba.conf entry") !== false) ? "auth" : ((strpos($msg, "timeout") !== false || strpos($msg, "timed out") !== false) ? "timeout" : ((strpos($msg, "refused") !== false || strpos($msg, "network is unreachable") !== false) ? "network" : "other")));  $detail = substr(str_replace([getenv("DB_PASSWORD"), getenv("APP_KEY"), getenv("DEMO_SEED_PASSWORD")], "[REDACTED]", $e->getMessage()), 0, 480); fwrite(STDERR, "Neon connectivity: category=" . $category . " code=" . $e->getCode() . " detail=" . $detail . "\\n"); exit(1); }'; then
-    connected=1
-    break
-  fi
-  sleep 2
-done
-if [[ "$connected" != 1 ]]; then
-  echo "Neon PostgreSQL connection unavailable. Refusing to serve broken application." >&2
-  exit 1
-fi
-
-php artisan package:discover --ansi
-php artisan optimize:clear
-php artisan migrate --force
-
-if [[ "${DEMO_SEED:-false}" == "true" ]]; then
-  : "${DEMO_SEED_PASSWORD:?Set a unique strong DEMO_SEED_PASSWORD for synthetic demonstration accounts}"
-  if [[ "${#DEMO_SEED_PASSWORD}" -lt 16 ]]; then
-    echo "DEMO_SEED_PASSWORD must be at least 16 characters" >&2
+# Render requires a listening HTTP port promptly. Initialize the synthetic demo data
+# in the background so slow legacy seeding cannot block the web-service health check.
+# Only sample accounts are permitted here: NEVER use real student records.
+(
+  echo "Initializing Neon PostgreSQL for demo..."
+  connected=0
+  for i in $(seq 1 12); do
+    if php -r 'try { new PDO("pgsql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: "5432").";dbname=".getenv("DB_DATABASE").";sslmode=require;connect_timeout=4;options=endpoint=".getenv("NEON_ENDPOINT_ID"), getenv("DB_USERNAME"), getenv("DB_PASSWORD")); } catch (Throwable $e) {  $msg = strtolower($e->getMessage()); $category = (strpos($msg, "could not translate") !== false || strpos($msg, "name or service not known") !== false) ? "dns" : ((strpos($msg, "password authentication failed") !== false || strpos($msg, "no pg_hba.conf entry") !== false) ? "auth" : ((strpos($msg, "timeout") !== false || strpos($msg, "timed out") !== false) ? "timeout" : ((strpos($msg, "refused") !== false || strpos($msg, "network is unreachable") !== false) ? "network" : "other")));  $detail = substr(str_replace([getenv("DB_PASSWORD"), getenv("APP_KEY"), getenv("DEMO_SEED_PASSWORD")], "[REDACTED]", $e->getMessage()), 0, 480); fwrite(STDERR, "Neon connectivity: category=" . $category . " code=" . $e->getCode() . " detail=" . $detail . "\\n"); exit(1); }'; then
+      connected=1
+      break
+    fi
+    sleep 2
+  done
+  if [[ "$connected" != 1 ]]; then
+    echo "Neon PostgreSQL connection unavailable. Refusing to serve broken application." >&2
     exit 1
   fi
-  existing=$(php -r 'require "vendor/autoload.php"; $a=require "bootstrap/app.php"; $a->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); echo Illuminate\Support\Facades\DB::table("users")->count();')
-  if [[ "$existing" == 0 ]]; then
-    echo "Seeding synthetic demo data only for empty database..."
-    php artisan db:seed --force
+
+  php artisan package:discover --ansi
+  php artisan optimize:clear
+  php artisan migrate --force
+
+  if [[ "${DEMO_SEED:-false}" == "true" ]]; then
+    : "${DEMO_SEED_PASSWORD:?Set a unique strong DEMO_SEED_PASSWORD for synthetic demonstration accounts}"
+    if [[ "${#DEMO_SEED_PASSWORD}" -lt 16 ]]; then
+      echo "DEMO_SEED_PASSWORD must be at least 16 characters" >&2
+      exit 1
+    fi
+    existing=$(php -r 'require "vendor/autoload.php"; $a=require "bootstrap/app.php"; $a->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); echo Illuminate\Support\Facades\DB::table("users")->count();')
+    if [[ "$existing" == 0 ]]; then
+      echo "Seeding synthetic demo data only for empty database..."
+      php artisan db:seed --force
+    fi
   fi
-fi
-php artisan storage:link >/dev/null 2>&1 || true
-chown -R www-data:www-data storage bootstrap/cache
+  php artisan storage:link >/dev/null 2>&1 || true
+  chown -R www-data:www-data storage bootstrap/cache
+
+  echo "Demo database initialization completed."
+) &
+
+# Static health endpoint remains available even while first-time demo seed runs.
 exec apache2-foreground
