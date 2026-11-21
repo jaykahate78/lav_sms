@@ -23,7 +23,7 @@ fi
 echo "Waiting for Neon PostgreSQL..."
 connected=0
 for i in $(seq 1 12); do
-  if php -r 'try { new PDO("pgsql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: "5432").";dbname=".getenv("DB_DATABASE").";sslmode=require;connect_timeout=4", getenv("DB_USERNAME"), getenv("DB_PASSWORD")); } catch (Throwable $e) { fwrite(STDERR, "Neon connectivity check failed (" . get_class($e) . ", code " . $e->getCode() . ")\\n"); exit(1); }'; then
+  if php -r 'try { new PDO("pgsql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: "5432").";dbname=".getenv("DB_DATABASE").";sslmode=require;connect_timeout=4", getenv("DB_USERNAME"), getenv("DB_PASSWORD")); } catch (Throwable $e) {  $msg = strtolower($e->getMessage()); $category = (strpos($msg, "could not translate") !== false || strpos($msg, "name or service not known") !== false) ? "dns" : ((strpos($msg, "password authentication failed") !== false || strpos($msg, "no pg_hba.conf entry") !== false) ? "auth" : ((strpos($msg, "timeout") !== false || strpos($msg, "timed out") !== false) ? "timeout" : ((strpos($msg, "refused") !== false || strpos($msg, "network is unreachable") !== false) ? "network" : "other"))); fwrite(STDERR, "Neon connectivity: category=" . $category . " code=" . $e->getCode() . "\\n"); exit(1); }'; then
     connected=1
     break
   fi
